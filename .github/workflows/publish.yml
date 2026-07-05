@@ -1,0 +1,67 @@
+name: Publish Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Debian package
+        run: |
+          chmod +x build_deb.sh
+          ./build_deb.sh
+      
+      - name: Upload to GitHub Packages
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./ufi-sms-commander-*.deb
+          asset_name: ufi-sms-commander-latest.deb
+          asset_content_type: application/vnd.debian.binary-package
+
+  publish-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Windows executable
+        run: |
+          pip install pyinstaller PyQt6 requests
+          pyinstaller --onefile --windowed --name="UFI-SMS-Commander" sms_manager.py
+      
+      - name: Upload to GitHub Packages
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./dist/UFI-SMS-Commander.exe
+          asset_name: UFI-SMS-Commander-latest.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
+  publish-appimage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build AppImage
+        run: |
+          chmod +x build_appimage.sh
+          ./build_appimage.sh
+      
+      - name: Upload to GitHub Packages
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./UFI-SMS-Commander-*.AppImage
+          asset_name: UFI-SMS-Commander-latest.AppImage
+          asset_content_type: application/x-executable
